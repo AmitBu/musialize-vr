@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.html",
   "scripts": {
-    "start": "light-server -s . -p 1122  -w 'src/**'",
+    "start": "light-server -s . -p 1122 -b 0.0.0.0  -w 'src/**'",
+    "secure": "http-server ./ -c-1 -S -C ./keys/server.crt -K ./keys/server.key -p 1313",
     "build": "parcel build index.html"
   },
   "dependencies": {
     "aframe": "0.9.0",
+    "http-server": "^0.11.1",
     "lodash": ">=4.17.11"
   },
   "devDependencies": {

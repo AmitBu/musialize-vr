@@ -1,12 +1,6 @@
-// import NumberUtils from "./utils/Number";
-// import p5 from 'p5'
-// window.p5 = require('p5');
-// window.p5 = p5;
-// import 'p5/lib/addons/p5.sound';
-
 const MAX_SPHERE_Y = 20;
 const MIN_SPHERE_Y = 1;
-const MIN_TIME = 70;
+const MIN_TIME = 100;
 const DISPLAY_TIME = 200;
 let lastNoteTime = 0;
 const scaleArr = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -38,12 +32,6 @@ AFRAME.registerComponent("musialize", {
     scaleArr.forEach((n, i) => {
       noteContainer.appendChild(getNoteText(n, i));
     });
-
-    // setInterval(() => {
-    //   const index = Math.floor(Math.random() * 12);
-    //   const pitch = Math.floor(Math.random() * 600);
-    //   //addPitchSphere(index, pitch);
-    // }, 3000);
   }
 });
 
@@ -64,17 +52,20 @@ function getNoteText(note, index) {
  * Add detected pitch to scale scene
  * @param noteIndex - the index of the note in the scale
  */
-function addPitchSphere(noteIndex, pitch) {
+function addPitchSphere(noteIndex, pitch, scaleNum = 1) {
   const noteLabel = scaleArr[noteIndex];
   const id = `note_${pitch}_${Date.now()}`;
   const noteContainer = document.querySelector("#scale-container");
   const eleSphere = document.createElement("a-sphere");
-  const x = getNoteXPosition(noteIndex) * 2;
+  const x = getNoteXPosition(noteIndex) * 2; 
   const y = NumberUtils.scale(pitch, 0, 600, MIN_SPHERE_Y, MAX_SPHERE_Y);
+
+  const scaleBrightness = NumberUtils.scale(scaleNum, 6, 1, 0.3, -0.6);
+  const newColor = shadeColor(scaleBrightness, noteColor[noteLabel]);
 
   eleSphere.setAttribute("position", `${x} ${y} -10`);
   eleSphere.setAttribute("radius", "1.0");
-  eleSphere.setAttribute("color", noteColor[noteLabel]);
+  eleSphere.setAttribute("color", newColor);
   eleSphere.setAttribute("shadow", "");
   eleSphere.setAttribute('id', id);
 
@@ -94,6 +85,7 @@ let audioContext;
 let pitch;
 
 function onUserStart() {
+  alert('Starting...')
   // Problem with chrome - user gesture
   if (!mic) {
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -137,14 +129,16 @@ function onUserStart() {
 function updateScaleData(pitch, note, scaleNum) {
   // Update chart data only if a treshhold has been met
   if (Date.now() - lastNoteTime >= MIN_TIME) {
-    console.log(note);
+    console.log(note, 'time', lastNoteTime, Date.now() - lastNoteTime);
+    lastNoteTime = Date.now();
     // TODO: Add time limitation - to not cause overflow
-    addPitchSphere(scaleArr.indexOf(note), pitch)
+    addPitchSphere(scaleArr.indexOf(note), pitch, scaleNum)
   }
 }
 
 /**
  * MIDI utils - when we'll have loader and module control move to different file
+ * TODO: Move to separate file
  */
 function getScaleFromMidi(midiNum) {
   return Math.floor(midiNum / 12) - 1;
@@ -157,7 +151,17 @@ function freqToMidi(freq) {
 }
 
 /**
- * Number utils - when we'll have loader and module control move to different file
+ * Color utils
+ * TODO: Move to separate file
+ */
+function shadeColor(p,c) {
+  var i=parseInt,r=Math.round,[a,b,c,d]=c.split(","),P=p<0,t=P?0:255*p,P=P?1+p:1-p;
+  return"rgb"+(d?"a(":"(")+r(i(a[3]=="a"?a.slice(5):a.slice(4))*P+t)+","+r(i(b)*P+t)+","+r(i(c)*P+t)+(d?","+d:")");
+}
+
+/**
+ * Number utils
+ * TODO: Move to separate file
  */
 class NumberUtils {
   static scale(num, in_min, in_max, out_min, out_max) {
