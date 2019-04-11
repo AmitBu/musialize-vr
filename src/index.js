@@ -18,6 +18,7 @@ const noteColor = {
   "A#": "rgb(235, 255, 0)",
   B: "rgb(152, 247, 0)"
 };
+let eleSphere;
 
 // TODO: check what can you do about it
 // Some weird stuff, telling me component was already registered
@@ -27,6 +28,7 @@ AFRAME.registerComponent("musialize", {
     // Solution for Getting Entities.
     var sceneEl = document.querySelector("a-scene"); // Or this.el since we're in a component.
     var noteContainer = sceneEl.querySelector("#scale-container");
+    eleSphere = sceneEl.querySelector("#amit-sphere");
 
     // position text elements (scale) on the plane
     scaleArr.forEach((n, i) => {
@@ -56,23 +58,31 @@ function addPitchSphere(noteIndex, pitch, scaleNum = 1) {
   const noteLabel = scaleArr[noteIndex];
   const id = `note_${pitch}_${Date.now()}`;
   const noteContainer = document.querySelector("#scale-container");
-  const eleSphere = document.createElement("a-sphere");
-  const x = getNoteXPosition(noteIndex) * 2; 
+  // TODO: Return if needed
+  // const eleSphere = document.createElement("a-sphere");
+  //const eleSphere = document.getElementById("amit-sphere");
+  
+  const x = getNoteXPosition(noteIndex) * 2;
   const y = NumberUtils.scale(pitch, 0, 600, MIN_SPHERE_Y, MAX_SPHERE_Y);
 
   const scaleBrightness = NumberUtils.scale(scaleNum, 6, 1, 0.3, -0.6);
   const newColor = shadeColor(scaleBrightness, noteColor[noteLabel]);
 
-  eleSphere.setAttribute("position", `${x} ${y} -10`);
-  eleSphere.setAttribute("radius", "1.0");
-  eleSphere.setAttribute("color", newColor);
-  eleSphere.setAttribute("shadow", "");
-  eleSphere.setAttribute('id', id);
+  if (eleSphere) {
+    eleSphere.setAttribute("position", `${x} ${y} -10`);
+    eleSphere.setAttribute("radius", "1.0");
+    eleSphere.setAttribute("color", newColor);
+    // eleSphere.setAttribute("shadow", "");
+    eleSphere.setAttribute('id', id);
+  } else {
+    eleSphere = document.querySelector("#amit-sphere");
+  }
 
-  noteContainer.appendChild(eleSphere);
+  // TODO: Return if needed
+  //noteContainer.appendChild(eleSphere);
 
   // TODO: Make sphere disappear after X time
-  setTimeout(() => removeSphereFromScale(id), DISPLAY_TIME);
+  //setTimeout(() => removeSphereFromScale(id), DISPLAY_TIME);
 }
 
 function removeSphereFromScale(id) {
@@ -121,8 +131,10 @@ function onUserStart() {
         // TODO: Update scale data
         updateScaleData(midiNum * scaleNum, currentNote, scaleNum);
       }
-      getPitch();
+      //getPitch();
+      setTimeout(() => getPitch(), MIN_TIME * 2);
     });
+
   }
 }
 
@@ -154,9 +166,9 @@ function freqToMidi(freq) {
  * Color utils
  * TODO: Move to separate file
  */
-function shadeColor(p,c) {
-  var i=parseInt,r=Math.round,[a,b,c,d]=c.split(","),P=p<0,t=P?0:255*p,P=P?1+p:1-p;
-  return"rgb"+(d?"a(":"(")+r(i(a[3]=="a"?a.slice(5):a.slice(4))*P+t)+","+r(i(b)*P+t)+","+r(i(c)*P+t)+(d?","+d:")");
+function shadeColor(p, c) {
+  var i = parseInt, r = Math.round, [a, b, c, d] = c.split(","), P = p < 0, t = P ? 0 : 255 * p, P = P ? 1 + p : 1 - p;
+  return "rgb" + (d ? "a(" : "(") + r(i(a[3] == "a" ? a.slice(5) : a.slice(4)) * P + t) + "," + r(i(b) * P + t) + "," + r(i(c) * P + t) + (d ? "," + d : ")");
 }
 
 /**
