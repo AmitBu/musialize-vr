@@ -25,15 +25,19 @@ let eleSphere;
 AFRAME.components.musialize = null;
 AFRAME.registerComponent("musialize", {
   init: function () {
+    console.log('init component');
     // Solution for Getting Entities.
     var sceneEl = document.querySelector("a-scene"); // Or this.el since we're in a component.
     var noteContainer = sceneEl.querySelector("#scale-container");
     eleSphere = sceneEl.querySelector("#amit-sphere");
 
     // position text elements (scale) on the plane
-    scaleArr.forEach((n, i) => {
-      noteContainer.appendChild(getNoteText(n, i));
-    });
+    for (let i = 0; i < scaleArr.length; i++) {
+      noteContainer.appendChild(getNoteText(scaleArr[i], i));
+    }
+  },
+  tick: function() {
+    // console.log('Tick');
   }
 });
 
@@ -57,7 +61,7 @@ function getNoteText(note, index) {
 function addPitchSphere(noteIndex, pitch, scaleNum = 1) {
   const noteLabel = scaleArr[noteIndex];
   const id = `note_${pitch}_${Date.now()}`;
-  const noteContainer = document.querySelector("#scale-container");
+  //const noteContainer = document.querySelector("#scale-container");
   // TODO: Return if needed
   // const eleSphere = document.createElement("a-sphere");
   //const eleSphere = document.getElementById("amit-sphere");
@@ -69,11 +73,12 @@ function addPitchSphere(noteIndex, pitch, scaleNum = 1) {
   const newColor = shadeColor(scaleBrightness, noteColor[noteLabel]);
 
   if (eleSphere) {
-    eleSphere.setAttribute("position", `${x} ${y} -10`);
-    eleSphere.setAttribute("radius", "1.0");
+    eleSphere.object3D.position.set( x, y, -20 );
+    // eleSphere.setAttribute("position", `${x} ${y} -10`);
+    // eleSphere.setAttribute("radius", "1.0");
     eleSphere.setAttribute("color", newColor);
     // eleSphere.setAttribute("shadow", "");
-    eleSphere.setAttribute('id', id);
+    // eleSphere.setAttribute('id', id);
   } else {
     eleSphere = document.querySelector("#amit-sphere");
   }
@@ -95,7 +100,7 @@ let audioContext;
 let pitch;
 
 function onUserStart() {
-  alert('Starting...')
+  console.log('Starting...')
   // Problem with chrome - user gesture
   if (!mic) {
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -118,30 +123,36 @@ function onUserStart() {
     }
   }
 
-  function getPitch() {
-    pitch.getPitch(function (err, frequency) {
-      if (err) {
-        console.error('ml5 error', err);
-        return;
-      } else if (frequency) {
-        let midiNum = freqToMidi(frequency);
-        const currentNote = scaleArr[midiNum % 12];
-        const scaleNum = getScaleFromMidi(midiNum);
-        // console.log(midiNum, currentNote, scaleNum);
-        // TODO: Update scale data
-        updateScaleData(midiNum * scaleNum, currentNote, scaleNum);
-      }
-      //getPitch();
-      setTimeout(() => getPitch(), MIN_TIME * 2);
-    });
+}
 
-  }
+let midiNum;
+let currentNote;
+let scaleNum;
+
+function getPitch() {
+  pitch.getPitch(function (err, frequency) {
+    if (err) {
+      console.error('ml5 error', err);
+      return;
+    } else if (frequency) {
+      midiNum = freqToMidi(frequency);
+      currentNote = scaleArr[midiNum % 12];
+      scaleNum = getScaleFromMidi(midiNum);
+      // console.log(midiNum, currentNote, scaleNum);
+      // TODO: Update scale data
+      updateScaleData(midiNum * scaleNum, currentNote, scaleNum);
+    }
+
+    setTimeout('getPitch()', MIN_TIME);
+  });
+
+
 }
 
 function updateScaleData(pitch, note, scaleNum) {
   // Update chart data only if a treshhold has been met
   if (Date.now() - lastNoteTime >= MIN_TIME) {
-    console.log(note, 'time', lastNoteTime, Date.now() - lastNoteTime);
+    // console.log(note, 'time', lastNoteTime, Date.now() - lastNoteTime);
     lastNoteTime = Date.now();
     // TODO: Add time limitation - to not cause overflow
     addPitchSphere(scaleArr.indexOf(note), pitch, scaleNum)
@@ -178,5 +189,9 @@ function shadeColor(p, c) {
 class NumberUtils {
   static scale(num, in_min, in_max, out_min, out_max) {
     return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
+  }
+
+  static getRandomArbitrary(min, max) {
+    return parseInt(Math.random() * (max - min) + min);
   }
 }
