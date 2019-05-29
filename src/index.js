@@ -25,7 +25,6 @@ let eleSphere;
 AFRAME.components.musialize = null;
 AFRAME.registerComponent("musialize", {
   init: function () {
-    console.log('init component');
     // Solution for Getting Entities.
     var sceneEl = document.querySelector("a-scene"); // Or this.el since we're in a component.
     var noteContainer = sceneEl.querySelector("#scale-container");
