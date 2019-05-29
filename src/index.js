@@ -1,3 +1,12 @@
+import NumberUtils from './utils/Number'
+import Soundfont from "soundfont-player";
+var MidiPlayer = require("midi-player-js");
+import file from "./assets/elvis.base64"; // TODO: Rename to sampleFile
+var AudioContext = window.AudioContext || window.webkitAudioContext || false;
+var ac = new AudioContext() || new webkitAudioContext();
+let Player;
+
+
 const MAX_SPHERE_Y = 20;
 const MIN_SPHERE_Y = 1;
 const MIN_TIME = 100;
@@ -94,59 +103,38 @@ function removeSphereFromScale(id) {
   ele.parentNode.removeChild(ele);
 }
 
-let mic;
-let audioContext;
-let pitch;
+window.onUserStart = () => {
+  console.log('Starting');
+  Player.play();
+}
 
-function onUserStart() {
-  console.log('Starting...')
-  // Problem with chrome - user gesture
-  if (!mic) {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(function (stream) {
-        audioContext = new AudioContext();
-        mic = stream;
-        startPitch();
-      })
-      .catch(function (err) {
-        console.log('The following getUserMedia error occured: ' + err);
-      });
-  }
-
-  function startPitch() {
-    pitch = ml5.pitchDetection("./model/", audioContext, mic, modelLoaded);
-
-    function modelLoaded(f) {
-      getPitch();
-      console.log("model loaded", f);
-    }
-  }
-
+window.onUserPause = () => {
+  Player.pause();
 }
 
 let midiNum;
 let currentNote;
 let scaleNum;
 
-function getPitch() {
-  pitch.getPitch(function (err, frequency) {
-    if (err) {
-      console.error('ml5 error', err);
-      return;
-    } else if (frequency) {
-      midiNum = freqToMidi(frequency);
-      currentNote = scaleArr[midiNum % 12];
-      scaleNum = getScaleFromMidi(midiNum);
-      // console.log(midiNum, currentNote, scaleNum);
-      // TODO: Update scale data
-      updateScaleData(midiNum * scaleNum, currentNote, scaleNum);
-    }
+// function getPitch() {
+//   pitch.getPitch(function (err, frequency) {
+//     if (err) {
+//       console.error('ml5 error', err);
+//       return;
+//     } else if (frequency) {
+//       midiNum = freqToMidi(frequency);
+//       currentNote = scaleArr[midiNum % 12];
+//       scaleNum = getScaleFromMidi(midiNum);
+//       // console.log(midiNum, currentNote, scaleNum);
+//       // TODO: Update scale data
+//       updateScaleData(midiNum * scaleNum, currentNote, scaleNum);
+//     }
 
-    setTimeout('getPitch()', MIN_TIME);
-  });
+//     setTimeout('getPitch()', MIN_TIME);
+//   });
 
 
-}
+// }
 
 function updateScaleData(pitch, note, scaleNum) {
   // Update chart data only if a treshhold has been met
@@ -157,6 +145,57 @@ function updateScaleData(pitch, note, scaleNum) {
     addPitchSphere(scaleArr.indexOf(note), pitch, scaleNum)
   }
 }
+
+const instrumentUrl = "https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/MusyngKite/acoustic_guitar_nylon-mp3.js";
+
+// MIDI player & events code
+Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
+  
+  function loadDataUri(dataUri) {
+    let currentNote;
+    let scaleNum;
+
+    Player = new MidiPlayer.Player(function(event) {
+      const {name, velocity, noteName, noteNumber} = event;
+      if (name === "Note on" && velocity && velocity > 0) {
+        // console.log("Event", name, velocity, noteName, event);
+        instrument.play(noteName, ac.currentTime, {
+          gain: velocity / 100
+        });
+
+        currentNote = scaleArr[noteNumber % 12];
+        scaleNum = getScaleFromMidi(noteNumber);
+        
+        console.log('Current note', currentNote, 'From midi', noteName, 'scale:', scaleNum);
+
+
+        // TODO: Display sphere for notes
+        updateScaleData(noteNumber * scaleNum, currentNote, scaleNum);
+      } else {
+        //console.log(event);
+      }
+    });
+
+    Player.on("endOfFile", function() {
+      // Do something when end of the file has been reached.
+      console.log("End of file");
+    });
+
+    console.log("instrument loaded");
+    try {
+      Player.loadDataUri(dataUri);
+    } catch (e) {
+      console.error(e);
+    }
+    console.log("load data uri");
+  }
+
+  loadDataUri(file);
+});
+
+
+
+// TODO: -------- SEPERATE UTILS ------------
 
 /**
  * MIDI utils - when we'll have loader and module control move to different file
@@ -179,18 +218,4 @@ function freqToMidi(freq) {
 function shadeColor(p, c) {
   var i = parseInt, r = Math.round, [a, b, c, d] = c.split(","), P = p < 0, t = P ? 0 : 255 * p, P = P ? 1 + p : 1 - p;
   return "rgb" + (d ? "a(" : "(") + r(i(a[3] == "a" ? a.slice(5) : a.slice(4)) * P + t) + "," + r(i(b) * P + t) + "," + r(i(c) * P + t) + (d ? "," + d : ")");
-}
-
-/**
- * Number utils
- * TODO: Move to separate file
- */
-class NumberUtils {
-  static scale(num, in_min, in_max, out_min, out_max) {
-    return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
-  }
-
-  static getRandomArbitrary(min, max) {
-    return parseInt(Math.random() * (max - min) + min);
-  }
 }
