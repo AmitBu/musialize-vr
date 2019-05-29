@@ -1,7 +1,10 @@
-import NumberUtils from './utils/Number'
 import Soundfont from "soundfont-player";
+import NumberUtils from './utils/Number'
+import ColorUtils from './utils/Color'
+import MidiUtils from './utils/MIDI'
+import sampleFile from "./assets/elvis.base64";
+
 var MidiPlayer = require("midi-player-js");
-import file from "./assets/elvis.base64"; // TODO: Rename to sampleFile
 var AudioContext = window.AudioContext || window.webkitAudioContext || false;
 var ac = new AudioContext() || new webkitAudioContext();
 let Player;
@@ -78,7 +81,7 @@ function addPitchSphere(noteIndex, pitch, scaleNum = 1) {
   const y = NumberUtils.scale(pitch, 0, 600, MIN_SPHERE_Y, MAX_SPHERE_Y);
 
   const scaleBrightness = NumberUtils.scale(scaleNum, 6, 1, 0.3, -0.6);
-  const newColor = shadeColor(scaleBrightness, noteColor[noteLabel]);
+  const newColor = ColorUtils.shadeColor(scaleBrightness, noteColor[noteLabel]);
 
   if (eleSphere) {
     eleSphere.object3D.position.set( x, y, -20 );
@@ -112,30 +115,6 @@ window.onUserPause = () => {
   Player.pause();
 }
 
-let midiNum;
-let currentNote;
-let scaleNum;
-
-// function getPitch() {
-//   pitch.getPitch(function (err, frequency) {
-//     if (err) {
-//       console.error('ml5 error', err);
-//       return;
-//     } else if (frequency) {
-//       midiNum = freqToMidi(frequency);
-//       currentNote = scaleArr[midiNum % 12];
-//       scaleNum = getScaleFromMidi(midiNum);
-//       // console.log(midiNum, currentNote, scaleNum);
-//       // TODO: Update scale data
-//       updateScaleData(midiNum * scaleNum, currentNote, scaleNum);
-//     }
-
-//     setTimeout('getPitch()', MIN_TIME);
-//   });
-
-
-// }
-
 function updateScaleData(pitch, note, scaleNum) {
   // Update chart data only if a treshhold has been met
   if (Date.now() - lastNoteTime >= MIN_TIME) {
@@ -146,9 +125,13 @@ function updateScaleData(pitch, note, scaleNum) {
   }
 }
 
+
+/**
+ * MIDI player & events code
+ * */ 
+
 const instrumentUrl = "https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/MusyngKite/acoustic_guitar_nylon-mp3.js";
 
-// MIDI player & events code
 Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
   
   function loadDataUri(dataUri) {
@@ -164,7 +147,7 @@ Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
         });
 
         currentNote = scaleArr[noteNumber % 12];
-        scaleNum = getScaleFromMidi(noteNumber);
+        scaleNum = MidiUtils.getScaleFromMidi(noteNumber);
         
         console.log('Current note', currentNote, 'From midi', noteName, 'scale:', scaleNum);
 
@@ -190,32 +173,5 @@ Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
     console.log("load data uri");
   }
 
-  loadDataUri(file);
+  loadDataUri(sampleFile);
 });
-
-
-
-// TODO: -------- SEPERATE UTILS ------------
-
-/**
- * MIDI utils - when we'll have loader and module control move to different file
- * TODO: Move to separate file
- */
-function getScaleFromMidi(midiNum) {
-  return Math.floor(midiNum / 12) - 1;
-}
-
-function freqToMidi(freq) {
-  var e = Math.log(freq / 440) / Math.log(2);
-  var i = Math.round(12 * e) + 69;
-  return i;
-}
-
-/**
- * Color utils
- * TODO: Move to separate file
- */
-function shadeColor(p, c) {
-  var i = parseInt, r = Math.round, [a, b, c, d] = c.split(","), P = p < 0, t = P ? 0 : 255 * p, P = P ? 1 + p : 1 - p;
-  return "rgb" + (d ? "a(" : "(") + r(i(a[3] == "a" ? a.slice(5) : a.slice(4)) * P + t) + "," + r(i(b) * P + t) + "," + r(i(c) * P + t) + (d ? "," + d : ")");
-}
