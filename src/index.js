@@ -12,7 +12,7 @@ let Player;
 
 const MAX_SPHERE_Y = 20;
 const MIN_SPHERE_Y = 1;
-const MIN_TIME = 100;
+const MIN_TIME = 20;
 const DISPLAY_TIME = 200;
 let lastNoteTime = 0;
 const scaleArr = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -151,8 +151,7 @@ Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
         
         console.log('Current note', currentNote, 'From midi', noteName, 'scale:', scaleNum);
 
-
-        // TODO: Display sphere for notes
+        // Display spheres for notes
         updateScaleData(noteNumber * scaleNum, currentNote, scaleNum);
       } else {
         //console.log(event);
