@@ -61,7 +61,9 @@ AFRAME.registerComponent("musialize", {
 
 function getNoteText(note, index) {
   const elePitch = document.createElement("a-text");
-  elePitch.setAttribute("text", "value: " + note);
+  elePitch.setAttribute("text", `value: ${note}`);
+  elePitch.setAttribute("scale", '1.5 1.5 1.5');
+  elePitch.setAttribute("size", "4");
   elePitch.setAttribute("position", `${getNoteXPosition(index)} 0 0`);
   elePitch.setAttribute("mixin", "text");
   
