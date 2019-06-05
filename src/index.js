@@ -17,7 +17,6 @@ const MAX_SPHERES = 20;
 const MAX_SPHERE_Y = 20;
 const MIN_SPHERE_Y = 1;
 const MIN_TIME = 0;
-const MAX_DISPLAY_TIME = 1000;
 let lastNoteTime = 0;
 const scaleArr = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const noteColor = {
@@ -59,17 +58,22 @@ AFRAME.registerComponent("musialize", {
   }
 });
 
-function getNoteXPosition(index) {
-  return index * 2 - scaleArr.length;
-}
 
 function getNoteText(note, index) {
   const elePitch = document.createElement("a-text");
   elePitch.setAttribute("text", "value: " + note);
   elePitch.setAttribute("position", `${getNoteXPosition(index)} 0 0`);
   elePitch.setAttribute("mixin", "text");
-
+  
   return elePitch;
+}
+
+/**
+ * Calculates and returns the notes position on the X scale
+ * @param {*} index 
+ */
+function getNoteXPosition(index) {
+  return NumberUtils.scale(index, 0, scaleArr.length, -20, 20)
 }
 
 /**
@@ -83,9 +87,7 @@ function addPitchSphere(noteIndex, pitch, scaleNum, noteId) {
   const eleSphere = spherePool.getItem();
   // Save sphere in active spheres
 
-
-
-  const x = getNoteXPosition(noteIndex) * 2;
+  const x = getNoteXPosition(noteIndex);
   const y = NumberUtils.scale(pitch, 0, 600, MIN_SPHERE_Y, MAX_SPHERE_Y);
 
   const scaleBrightness = NumberUtils.scale(scaleNum, 6, 1, 0.3, -0.6);
@@ -100,9 +102,9 @@ function addPitchSphere(noteIndex, pitch, scaleNum, noteId) {
     activeSpheres[noteId].push(eleSphere);
     // console.log('Getting from queue', noteId);
 
-    eleSphere.object3D.position.set(x, y, -20);
+    eleSphere.object3D.position.set(x, y, 0);
     // eleSphere.setAttribute("position", `${x} ${y} -10`);
-    // eleSphere.setAttribute("radius", "1.0");
+    eleSphere.setAttribute("radius", "0.5");
     eleSphere.setAttribute("color", newColor);
     // eleSphere.setAttribute("shadow", "");
     // eleSphere.setAttribute('id', id);

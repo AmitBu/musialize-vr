@@ -24,7 +24,6 @@ class SpherePool extends ObjectPool {
     _initialize() {
         console.log('Initialize pool', this._maxItems)
         for (let i = 0; i < this._maxItems; i++) {
-            console.log('Adding item', i)
             const sphere = this._createSphere('sphere_' + i);
             // Add new sphere to pool
             this.addItem(sphere);
