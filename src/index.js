@@ -66,7 +66,7 @@ function getNoteText(note, index) {
   elePitch.setAttribute("size", "4");
   elePitch.setAttribute("position", `${getNoteXPosition(index)} 0 0`);
   elePitch.setAttribute("mixin", "text");
-  
+
   return elePitch;
 }
 
@@ -75,14 +75,14 @@ function getNoteText(note, index) {
  * @param {*} index 
  */
 function getNoteXPosition(index) {
-  return NumberUtils.scale(index, 0, scaleArr.length, -20, 20)
+  return NumberUtils.scale(index, 0, scaleArr.length, -22, 22)
 }
 
 /**
  * Add detected pitch to scale scene
  * @param noteIndex - the index of the note in the scale
  */
-function addPitchSphere(noteIndex, pitch, scaleNum, noteId) {
+function addPitchSphere(noteIndex, pitch, scaleNum, velocity, noteId) {
   const noteLabel = scaleArr[noteIndex];
 
   // TODO: Get sphere from SpherePool
@@ -94,6 +94,7 @@ function addPitchSphere(noteIndex, pitch, scaleNum, noteId) {
 
   const scaleBrightness = NumberUtils.scale(scaleNum, 6, 1, 0.3, -0.6);
   const newColor = ColorUtils.shadeColor(scaleBrightness, noteColor[noteLabel]);
+  const radius = NumberUtils.scale(velocity, 0, 100, 0.2, 1.2)
 
   if (eleSphere) {
     // Setting active spheres for current note to empty array
@@ -106,7 +107,7 @@ function addPitchSphere(noteIndex, pitch, scaleNum, noteId) {
 
     eleSphere.object3D.position.set(x, y, 0);
     // eleSphere.setAttribute("position", `${x} ${y} -10`);
-    eleSphere.setAttribute("radius", "0.5");
+    eleSphere.setAttribute("radius", radius);
     eleSphere.setAttribute("color", newColor);
     // eleSphere.setAttribute("shadow", "");
     // eleSphere.setAttribute('id', id);
@@ -117,7 +118,7 @@ function addPitchSphere(noteIndex, pitch, scaleNum, noteId) {
     console.warn('Could not get avilable sphere - skipping!')
   }
 
-  
+
 }
 
 function removeSphereFromScale(noteId) {
@@ -142,13 +143,13 @@ window.onUserPause = () => {
   Player.pause();
 }
 
-function updateScaleData(pitch, note, scaleNum, noteId) {
+function updateScaleData(pitch, note, scaleNum, velocity, noteId) {
   // Update chart data only if a treshhold has been met
   if (Date.now() - lastNoteTime >= MIN_TIME) {
     // console.log(note, 'time', lastNoteTime, Date.now() - lastNoteTime);
     lastNoteTime = Date.now();
     // TODO: Add time limitation - to not cause overflow
-    addPitchSphere(scaleArr.indexOf(note), pitch, scaleNum, noteId)
+    addPitchSphere(scaleArr.indexOf(note), pitch, scaleNum, velocity, noteId)
   }
 }
 
@@ -185,7 +186,7 @@ Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
         // console.log('Note on', noteId, event);
 
         // Display spheres for notes
-        updateScaleData(noteNumber * scaleNum, currentNote, scaleNum, noteId);
+        updateScaleData(noteNumber * scaleNum, currentNote, scaleNum, velocity, noteId);
       } else if (name === "Note off") {
         // console.log('Note off', noteId, event);
         removeSphereFromScale(getIdFromEvent(event));
@@ -193,13 +194,13 @@ Soundfont.instrument(ac, instrumentUrl).then((instrument) => {
     });
 
     Player.on("endOfFile", function () {
-      // Do something when end of the file has been reached.
-      console.log("End of file");
+      // TODO: Remove all note spheres when finished playing
     });
 
     console.log("instrument loaded");
     try {
       Player.loadDataUri(dataUri);
+      document.getElementById('btn-start').disabled = false;
     } catch (e) {
       console.error(e);
     }
