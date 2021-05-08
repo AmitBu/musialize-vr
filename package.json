@@ -11,7 +11,7 @@
   "dependencies": {
     "aframe": "0.9.0",
     "http-server": "^0.11.1",
-    "lodash": ">=4.17.11",
+    "lodash": ">=4.17.21",
     "midi-player-js": "^2.0.5",
     "soundfont-player": "^0.11.0"
   },
